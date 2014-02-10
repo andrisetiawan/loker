@@ -13,9 +13,9 @@ import notification
 
 
 #write json data to file
-def write_log(domain, ip_list, path, last_checked_time = strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))):
+def write_log(command, ip_list, path, last_checked_time = strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time()))):
 	data = {
-		"domain": domain,
+		"command": command,
 		"last_checked_time": last_checked_time,
 		"ip": ip_list
 	}
@@ -35,54 +35,58 @@ def load_log(path):
 	return data
 
 if __name__ == '__main__':
-	log_file_path 	= "log/current_ip_address.json"
-	domain 			= "google.com"
-	command 		= "nslookup %s" % domain
+	with open('command_list.json') as command_list_file:
+		commands = json.load(command_list_file)
 
-	current_check_time = strftime("%Y%m%d-%H-%M-%S", time.localtime(time.time()))
-	response = os.popen(command).read()
+	for key in commands:
+		log_file_path 	= "log/current_%s.json" % key
+		command 		= commands[key]
 
-	# remove first two lines to remove [server & address]
-	response = '\n'.join(response.split('\n')[2:]) 
+		current_check_time = strftime("%Y%m%d-%H-%M-%S", time.localtime(time.time()))
+		response = os.popen(command).read()
 
-	# find ip from current string using regex
-	current_ip_list = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', response)
+		# remove first two lines to remove [server & address]
+		response = '\n'.join(response.split('\n')[2:]) 
 
-	# remove duplicate ip
-	current_ip_list = list(OrderedDict.fromkeys(current_ip_list))
+		# find ip from current string using regex
+		current_ip_list = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', response)
 
-	# check is there a previous log file to be compared
-	if os.path.isfile(log_file_path):
-		# load previous ip list
-		previous_log = load_log(log_file_path)
-		previous_ip_list = previous_log['ip']
-		# check equal
-		if set(previous_ip_list) == set(current_ip_list):
-			print "sama"
+		# remove duplicate ip
+		current_ip_list = list(OrderedDict.fromkeys(current_ip_list))
 
-			# only update 'last_checked_time' at previous log.
-			write_log(domain, previous_log['ip'], log_file_path)
-			
+		# check is there a previous log file to be compared
+		if os.path.isfile(log_file_path):
+			# load previous ip list
+			previous_log = load_log(log_file_path)
+			previous_ip_list = previous_log['ip']
+			# check equal
+			if set(previous_ip_list) == set(current_ip_list):
+				print "sama"
+
+				# only update 'last_checked_time' at previous log.
+				write_log(command, previous_log['ip'], log_file_path)
+				
+			else:
+				print "beda. send notification. write log file"
+
+				# log previous
+				log_file_name = "log/%s-%s.json" % (key, current_check_time)
+				write_log(command, previous_log['ip'], log_file_name, previous_log['last_checked_time'])
+
+				# log current
+				write_log(command, current_ip_list, log_file_path)
+
+				print "sending notification..."
+				try:
+					# send notification
+					notification.send_email(key, command, previous_ip_list, previous_log['last_checked_time'], current_ip_list, current_check_time)
+				except Exception, e:
+					print e
+					print "error while sending notification"
+				
+				print "done."
+
 		else:
-			print "beda. send notification. write log file"
-
-			# log previous
-			log_file_name = "log/%s_ip_address.json" % current_check_time
-			write_log(domain, previous_log['ip'], log_file_name, previous_log['last_checked_time'])
-
-			# log current
-			write_log(domain, current_ip_list, log_file_path)
-
-			print "sending notification..."
-			try:
-				# send notification
-				notification.send_email(previous_ip_list, previous_log['last_checked_time'], current_ip_list, current_check_time)
-			except Exception, e:
-				print "error while sending notification"
-			
-			print "done."			
-
-	else:
-		# no log file to be compared, so write the new one.
-		write_log(domain, current_ip_list, log_file_path)
-		print "no log file. print a new one."
+			# no log file to be compared, so write the new one.
+			write_log(command, current_ip_list, log_file_path)
+			print "no log file. print a new one."

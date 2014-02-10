@@ -1,20 +1,19 @@
 #!/usr/bin/python
 import smtplib
  
-def send_email(previous_ip_list, previous_check_time, current_ip_list, current_check_time):
+def send_email(key, command, previous_ip_list, previous_check_time, current_ip_list, current_check_time):
 
 	# Email configuration.
 	# Todo: Change it with actual configuration.
 	SMTP_SERVER = 'smtp.gmail.com'
 	SMTP_PORT = 587
-	SENDER = 'shevtiawan@gmail.com'
-	PASSWORD = "this_is_my_password"
+	SENDER = 'ahnshev@gmail.com'
+	PASSWORD = "11235813"
 
 	recipient = 'andri.setiawan@veritrans.co.id'
-	subject = 'NSLOOKUP DIFF'
+	subject = '[nslookup report] %s - "%s" found some different result.' % (key, command)
 
-
-	body = build_mail_body(previous_ip_list, previous_check_time, current_ip_list, current_check_time)
+	body = build_mail_body(key, command, previous_ip_list, previous_check_time, current_ip_list, current_check_time)
 	headers = ["From: " + SENDER,
 	           "Subject: " + subject,
 	           "To: " + recipient,
@@ -31,19 +30,30 @@ def send_email(previous_ip_list, previous_check_time, current_ip_list, current_c
 	session.sendmail(SENDER, recipient, headers + "\r\n\r\n" + body)
 	session.quit()
 
-def build_mail_body(previous_ip_list, previous_check_time, current_ip_list, current_check_time):
-	message = "NSLOOKUP on Google.com found some differences. <br /><br />"
+def build_mail_body(key, command, previous_ip_list, previous_check_time, current_ip_list, current_check_time):
+	message = '<style type="text/css">table{border-width: 0 0 1px 1px;border-spacing: 0;border-collapse: collapse;border-style: solid;} td, th {margin: 0;padding: 4px;border-width: 1px 1px 0 0;border-style: solid;}</style>'
 
-	message += "<strong>Current IP list:</strong> "
-	message += "(Checked at: %s)" % current_check_time
-	message += "<br />"
-	for ip in current_ip_list:
-		message = message + ip + "<br />"
+	message += '"%s" found some different result. <br /><br />' % command
 
-	message += "<br /><strong>Previous IP list:</strong> "
-	message += "(Checked at: %s)" % previous_check_time
-	message += "<br />"
-	for ip in previous_ip_list:
-		message = message + ip + "<br />"
+	message += "<table border=1>"
+	message += "<tr>"
+	message += "<td><strong>PREVIOUS</strong> <br /> (%s)</td>" % previous_check_time
+	message += "<td><strong>CURRENT</strong> <br /> (%s)</td>" % current_check_time
+	message += "<td><strong>STATUS</strong></td>"
+	message += "</tr>"
+
+	for i in xrange(0,(len(previous_ip_list))):
+		if previous_ip_list[i] in current_ip_list:
+			message += "<tr><td>%s</td><td>%s</td><td>-</td></tr>" % (previous_ip_list[i], previous_ip_list[i])
+		else:
+			message += '<tr><td style="color:#dd1111;">%s</td><td> - </td><td>missing</td></tr>' % previous_ip_list[i]
+
+	for i in xrange(0,(len(current_ip_list))):
+		if current_ip_list[i] in previous_ip_list:
+			pass
+		else:
+			message += '<tr><td></td><td style="color:#dd1111;">%s</td><td>new</td></tr>' % current_ip_list[i]
+
+	message += "</table>"
 
 	return message

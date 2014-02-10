@@ -8,7 +8,7 @@ def send_email(key, command, previous_ip_list, previous_check_time, current_ip_l
 	SMTP_SERVER = 'smtp.gmail.com'
 	SMTP_PORT = 587
 	SENDER = 'ahnshev@gmail.com'
-	PASSWORD = "11235813"
+	PASSWORD = "this_is_email_password"
 
 	recipient = 'andri.setiawan@veritrans.co.id'
 	subject = '[nslookup report] %s - "%s" found some different result.' % (key, command)

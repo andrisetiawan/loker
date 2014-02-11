@@ -32,9 +32,7 @@ def send_email(key, command, previous_ip_list, previous_check_time, current_ip_l
 
 def build_mail_body(key, command, previous_ip_list, previous_check_time, current_ip_list, current_check_time):
 	message = '<style type="text/css">table{border-width: 0 0 1px 1px;border-spacing: 0;border-collapse: collapse;border-style: solid;} td, th {margin: 0;padding: 4px;border-width: 1px 1px 0 0;border-style: solid;}</style>'
-
 	message += '"%s" found some different result. <br /><br />' % command
-
 	message += "<table border=1>"
 	message += "<tr>"
 	message += "<td><strong>PREVIOUS</strong> <br /> (%s)</td>" % previous_check_time
@@ -46,13 +44,13 @@ def build_mail_body(key, command, previous_ip_list, previous_check_time, current
 		if previous_ip_list[i] in current_ip_list:
 			message += "<tr><td>%s</td><td>%s</td><td>-</td></tr>" % (previous_ip_list[i], previous_ip_list[i])
 		else:
-			message += '<tr><td style="color:#dd1111;">%s</td><td> - </td><td>missing</td></tr>' % previous_ip_list[i]
+			message += '<tr><td style="color:#dd1111;">%s</td><td> - </td><td style="color:#dd1111;>missing</td></tr>' % previous_ip_list[i]
 
 	for i in xrange(0,(len(current_ip_list))):
 		if current_ip_list[i] in previous_ip_list:
 			pass
 		else:
-			message += '<tr><td></td><td style="color:#dd1111;">%s</td><td>new</td></tr>' % current_ip_list[i]
+			message += '<tr><td>-</td><td style="color:#dd1111;">%s</td><td style="color:#dd1111;>new</td></tr>' % current_ip_list[i]
 
 	message += "</table>"
 
